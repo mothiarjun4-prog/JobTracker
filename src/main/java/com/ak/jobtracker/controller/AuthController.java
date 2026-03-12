@@ -17,7 +17,6 @@ import com.ak.jobtracker.repository.UserRepo;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
     private final UserRepo userRepo;
@@ -35,12 +34,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        // This triggers your UserService.loadUserByUsername()
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
+        User user = userRepo.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found after authentication"));
+        String token = jwtUtils.generateToken(user);
 
-        String token = jwtUtils.generateToken(loginRequest.getEmail());
         return ResponseEntity.ok(token);
     }
 }

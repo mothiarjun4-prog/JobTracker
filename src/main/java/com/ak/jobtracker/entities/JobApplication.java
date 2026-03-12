@@ -5,18 +5,20 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "job_applications")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "job_applications")
 public class JobApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String jobTitle;
+    // map directly to your React state
+    private String companyName;
+    private String role;
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
@@ -30,11 +32,9 @@ public class JobApplication {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // You can keep the 'Company' entity for complex data later,
+    // but React is currently sending a String.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resume_id")
-    private Resume resume;
 }

@@ -1,10 +1,10 @@
 package com.ak.jobtracker.service;
 
 import com.ak.jobtracker.entities.ApplicationStatus;
-import com.ak.jobtracker.entities.Company;
 import com.ak.jobtracker.entities.JobApplication;
 import com.ak.jobtracker.entities.User;
 import com.ak.jobtracker.repository.JobApplicationRepo;
+import com.ak.jobtracker.repository.UserRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,32 +16,34 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JobApplicationService {
 
-    private final JobApplicationRepo applicationRepository;
+    private final UserRepo userRepo;
+    private final JobApplicationRepo applicationRepo;
     private final CompanyService companyService;
     private final UserService userService;
 
-    public JobApplication createApplication(Long userId, String companyName, JobApplication app) {
-        User user = userService.getUserById(userId);
-        Company company = companyService.getOrCreateCompany(companyName);
+    public JobApplication createApplication(Long userId, String companyName, JobApplication application) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        app.setUser(user);
-        app.setCompany(company);
+        application.setUser(user);
+        application.setCompanyName(companyName);
+        application.setAppliedDate(LocalDate.now());
 
-        if (app.getAppliedDate() == null) {
-            app.setAppliedDate(LocalDate.now());
+        // Fallback if status isn't sent from frontend
+        if (application.getStatus() == null) {
+            application.setStatus(ApplicationStatus.PENDING);
         }
 
-        return applicationRepository.save(app);
+        return applicationRepo.save(application);
     }
-
     public List<JobApplication> getUserApplications(Long userId) {
-        return applicationRepository.findByUserId(userId);
+        return applicationRepo.findByUserId(userId);
     }
 
     public JobApplication updateStatus(Long applicationId, ApplicationStatus newStatus) {
-        JobApplication app = applicationRepository.findById(applicationId)
+        JobApplication app = applicationRepo.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         app.setStatus(newStatus);
-        return applicationRepository.save(app);
+        return applicationRepo.save(app);
     }
 }

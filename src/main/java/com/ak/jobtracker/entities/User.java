@@ -62,10 +62,6 @@ public class User implements UserDetails {
         return this.email; // We use email as the unique login identifier
     }
 
-    public String getPassword(String password) {
-        return this.password;
-    }
-
     @Override
     public boolean isAccountNonExpired() { return true; }
 
@@ -80,10 +76,6 @@ public class User implements UserDetails {
 
     public String getEmail() {
         return this.email;
-    }
-
-    public void setPassword(String encode) {
-        this.password = encode;
     }
 
 

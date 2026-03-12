@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/applications")
-@CrossOrigin(origins = "http://localhost:3000")
 public class JobApplicationController {
 
     @Autowired
@@ -26,10 +25,10 @@ public class JobApplicationController {
     @PostMapping("/user/{userId}")
     public ResponseEntity<JobApplication> create(
             @PathVariable Long userId,
-            @RequestParam String companyName,
             @RequestBody JobApplication application) {
+        // Take companyName directly from the application object
         return new ResponseEntity<>(
-                applicationService.createApplication(userId, companyName, application),
+                applicationService.createApplication(userId, application.getCompanyName(), application),
                 HttpStatus.CREATED
         );
     }
