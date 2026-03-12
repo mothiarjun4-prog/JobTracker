@@ -2,6 +2,7 @@ package com.ak.jobtracker.controller;
 
 
 import com.ak.jobtracker.component.JwtUtils;
+import com.ak.jobtracker.dto.AuthResponse;
 import com.ak.jobtracker.dto.LoginRequest;
 import com.ak.jobtracker.entities.User;
 
@@ -25,22 +26,25 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        // Hash the password before saving!
+    public ResponseEntity<AuthResponse> register(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepo.save(user);
-        return ResponseEntity.ok("User registered successfully");
+        User savedUser = userRepo.save(user);
+        String token = jwtUtils.generateToken(savedUser);
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
+
         User user = userRepo.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found after authentication"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         String token = jwtUtils.generateToken(user);
 
-        return ResponseEntity.ok(token);
+        // Return the DTO so it renders as {"token": "..."} in JSON
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 }
