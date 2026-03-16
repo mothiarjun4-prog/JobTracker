@@ -3,28 +3,43 @@ package com.ak.jobtracker.service;
 import com.ak.jobtracker.entities.Resume;
 import com.ak.jobtracker.entities.User;
 import com.ak.jobtracker.repository.ResumeRepo;
-import lombok.RequiredArgsConstructor;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ResumeService {
 
-    private final ResumeRepo resumeRepository;
+    @Autowired
+    private ResumeRepo resumeRepo;
 
-    public Resume uploadResume(User user, String fileName, String version) {
-        Resume resume = new Resume();
-        resume.setUser(user);
-        resume.setFileName(fileName);
-        resume.setVersionTag(version);
-        resume.setUploadedAt(LocalDateTime.now());
-        return resumeRepository.save(resume);
-    }
 
     public List<Resume> getResumesForUser(Long userId) {
-        return resumeRepository.findByUserId(userId);
+        return resumeRepo.findByUserId(userId);
+    }
+
+    public Resume uploadResume(User user, MultipartFile file) {
+        // 1. Calculate version based on existing user records
+        long count = resumeRepo.countByUserId(user.getId());
+        String version = "v" + (count + 1);
+
+        Resume resume = Resume.builder()
+                .fileName(file.getOriginalFilename())
+                .versionTag(version)
+                .user(user)
+                .build();
+
+        return resumeRepo.save(resume);
+    }
+
+    @Transactional
+    public boolean deleteResume(Long id) {
+        return resumeRepo.findById(id).map(resume -> {
+            resumeRepo.delete(resume);
+            return true;
+        }).orElse(false);
     }
 }

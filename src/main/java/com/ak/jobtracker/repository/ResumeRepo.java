@@ -9,7 +9,6 @@ import java.util.Optional;
 public interface ResumeRepo extends JpaRepository<Resume,Long> {
 
     List<Resume> findByUserId(Long userId);
-
     Optional<Resume> findFirstByUserIdOrderByUploadedAtDesc(Long userId);
-
+    long countByUserId(Long id);
 }

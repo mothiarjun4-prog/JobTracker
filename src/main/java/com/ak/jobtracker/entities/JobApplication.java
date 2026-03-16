@@ -1,5 +1,6 @@
 package com.ak.jobtracker.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,8 +17,8 @@ public class JobApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // map directly to your React state
     private String companyName;
+
     private String role;
 
     @Enumerated(EnumType.STRING)
@@ -29,12 +30,19 @@ public class JobApplication {
     private String notes;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "user_id")
     private User user;
 
-    // You can keep the 'Company' entity for complex data later,
-    // but React is currently sending a String.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
+
+    // Ensure date is set automatically if not provided
+    @PrePersist
+    protected void onCreate() {
+        if (this.appliedDate == null) {
+            this.appliedDate = LocalDate.now();
+        }
+    }
 }

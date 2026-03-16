@@ -4,9 +4,11 @@ import com.ak.jobtracker.entities.Resume;
 import com.ak.jobtracker.entities.User;
 import com.ak.jobtracker.service.ResumeService;
 import com.ak.jobtracker.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -14,13 +16,11 @@ import java.util.List;
 @RequestMapping("/api/v1/resumes")
 public class ResumeController {
 
-    private final ResumeService resumeService;
-    private final UserService userService;
+    @Autowired
+    private ResumeService resumeService;
+    @Autowired
+    private UserService userService;
 
-    public ResumeController(ResumeService resumeService, UserService userService) {
-        this.resumeService = resumeService;
-        this.userService = userService;
-    }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Resume>> getResumes(@PathVariable Long userId) {
@@ -30,12 +30,22 @@ public class ResumeController {
     @PostMapping("/user/{userId}/upload")
     public ResponseEntity<Resume> upload(
             @PathVariable Long userId,
-            @RequestParam String fileName,
-            @RequestParam String version) {
+            @RequestParam("file") MultipartFile file) { // Matches React formData.append('file', ...)
+
         User user = userService.getUserById(userId);
         return new ResponseEntity<>(
-                resumeService.uploadResume(user, fileName, version),
+                resumeService.uploadResume(user, file),
                 HttpStatus.CREATED
         );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteResume(@PathVariable Long id) {
+        boolean isDeleted = resumeService.deleteResume(id);
+        if (isDeleted) {
+            return ResponseEntity.ok("Resume deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resume not found");
+        }
     }
 }

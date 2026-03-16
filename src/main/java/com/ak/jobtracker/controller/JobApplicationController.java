@@ -9,13 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/applications")
 public class JobApplicationController {
 
     @Autowired
-    JobApplicationService applicationService;
+    private JobApplicationService applicationService;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<JobApplication>> getByUserId(@PathVariable Long userId) {
@@ -26,17 +27,38 @@ public class JobApplicationController {
     public ResponseEntity<JobApplication> create(
             @PathVariable Long userId,
             @RequestBody JobApplication application) {
-        // Take companyName directly from the application object
         return new ResponseEntity<>(
                 applicationService.createApplication(userId, application.getCompanyName(), application),
                 HttpStatus.CREATED
         );
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<JobApplication> updateStatus(
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
-            @RequestParam ApplicationStatus status) {
-        return ResponseEntity.ok(applicationService.updateStatus(id, status));
+            @RequestBody Map<String, String> statusUpdate) {
+
+        String statusStr = statusUpdate.get("status");
+
+        // Log for debugging
+        System.out.println("Received status update request for ID: " + id);
+        System.out.println("Status string received: [" + statusStr + "]");
+
+        if (statusStr == null) return ResponseEntity.badRequest().body("Key 'status' missing");
+
+        try {
+            // Convert to uppercase to prevent case-sensitive mismatches
+            ApplicationStatus status = ApplicationStatus.valueOf(statusStr.toUpperCase());
+            return ResponseEntity.ok(applicationService.updateStatus(id, status));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Failed to map status: " + statusStr);
+            return ResponseEntity.badRequest().body("Invalid status: " + statusStr);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteApplication(@PathVariable Long id) {
+        applicationService.deleteApplication(id);
+        return ResponseEntity.noContent().build();
     }
 }
