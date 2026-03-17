@@ -47,18 +47,24 @@ const Dashboard = () => {
             navigate('/login');
             return;
         }
+
         const loadDashboardData = async () => {
             try {
                 const decoded = jwtDecode(token);
-                setUser({ fullName: decoded.fullName || 'User', email: decoded.sub || decoded.email });
+                setUser({ 
+                    fullName: decoded.fullName || decoded.name || 'User', 
+                    email: decoded.sub || decoded.email 
+                });
+
                 const [jobsRes, resumeRes] = await Promise.all([
-                    api.get(`/v1/applications/user/${userId}`),
-                    api.get(`/v1/resumes/user/${userId}`)
+                    api.get(`/api/v1/applications/user/${userId}`), 
+                    api.get(`/api/v1/resumes/user/${userId}`)      
                 ]);
                 setJobs(jobsRes.data);
                 setResumes(resumeRes.data);
             } catch (error) {
                 if (error.response?.status === 401) navigate('/login');
+                console.error("Data Load Error:", error);
             } finally {
                 setLoading(false);
             }
@@ -86,12 +92,15 @@ const Dashboard = () => {
         const job = dragItem.current;
         if (!job || job.status === newStatus) return;
 
+        // Optimistic UI Update
+        const oldJobs = [...jobs];
         setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: newStatus } : j));
+
         try {
-            await api.put(`v1/applications/${job.id}/status`, { status: newStatus });
+            await api.put(`/api/v1/applications/${job.id}/status`, { status: newStatus });
             showToast(`Moved to ${newStatus}`);
         } catch (err) {
-            setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: job.status } : j));
+            setJobs(oldJobs);
             showToast('Failed to update status', 'error');
         }
     };
@@ -100,7 +109,7 @@ const Dashboard = () => {
         e.preventDefault();
         const { userId } = getAuthData();
         try {
-            const res = await api.post(`/v1/applications/user/${userId}`, newJob);
+            const res = await api.post(`/api/v1/applications/user/${userId}`, newJob);
             setJobs([...jobs, res.data]);
             setNewJob({ companyName: '', role: '', status: 'PENDING' });
             showToast('Application added!');
@@ -112,7 +121,7 @@ const Dashboard = () => {
     const handleDeleteJob = async (jobId) => {
         if (!window.confirm('Delete this application?')) return;
         try {
-            await api.delete(`/v1/applications/${jobId}`);
+            await api.delete(`/api/v1/applications/${jobId}`);
             setJobs(jobs.filter(job => job.id !== jobId));
             showToast('Deleted');
         } catch (err) {
@@ -123,12 +132,13 @@ const Dashboard = () => {
     const handleResumeUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const { userId, token } = getAuthData();
+        const { userId } = getAuthData();
         const formData = new FormData();
         formData.append('file', file);
+        
         try {
-            const res = await api.post(`/v1/resumes/user/${userId}/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${token}` }
+            const res = await api.post(`/api/v1/resumes/user/${userId}/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
             setResumes([...resumes, res.data]);
             showToast('Resume uploaded!');
@@ -139,6 +149,7 @@ const Dashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('userId');
         navigate('/login');
     };
 
@@ -258,47 +269,12 @@ const Dashboard = () => {
     );
 };
 
-// --- Updated Styles for Perfect Centering ---
-const mainContainerStyle = { 
-    backgroundColor: '#1e1f22', 
-    color: '#bcbec4', 
-    minHeight: '100vh', 
-    width: '100vw',
-    fontFamily: 'Inter, system-ui',
-    display: 'flex',
-    flexDirection: 'column'
-};
-
-const centeringWrapper = { 
-    width: '100%',
-    maxWidth: '1300px', 
-    margin: '0 auto',  // This is the magic line for horizontal centering
-    padding: '40px 20px',
-    boxSizing: 'border-box'
-};
-
-const mainLayout = { 
-    display: 'flex', 
-    gap: '30px', 
-    justifyContent: 'center', // Centers flex items horizontally
-    alignItems: 'flex-start'
-};
-
-const kanbanGrid = { 
-    display: 'flex', 
-    gap: '15px',
-    flex: 1
-};
-
-const sidebarStyle = { 
-    width: '320px', 
-    display: 'flex', 
-    flexDirection: 'column', 
-    gap: '20px',
-    flexShrink: 0 
-};
-
-// Remaining styles
+// --- Styles (Unchanged) ---
+const mainContainerStyle = { backgroundColor: '#1e1f22', color: '#bcbec4', minHeight: '100vh', width: '100vw', fontFamily: 'Inter, system-ui', display: 'flex', flexDirection: 'column' };
+const centeringWrapper = { width: '100%', maxWidth: '1300px', margin: '0 auto', padding: '40px 20px', boxSizing: 'border-box' };
+const mainLayout = { display: 'flex', gap: '30px', justifyContent: 'center', alignItems: 'flex-start' };
+const kanbanGrid = { display: 'flex', gap: '15px', flex: 1 };
+const sidebarStyle = { width: '320px', display: 'flex', flexDirection: 'column', gap: '20px', flexShrink: 0 };
 const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #323232', paddingBottom: '20px', marginBottom: '30px' };
 const welcomeTextStyle = { color: '#dfe1e5', margin: 0, fontSize: '1.8rem', fontWeight: 'bold' };
 const columnStyle = { flex: 1, borderRadius: '10px', padding: '15px', minHeight: '500px', border: '2px solid #323232', minWidth: '180px' };

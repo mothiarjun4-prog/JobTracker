@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
@@ -10,7 +10,7 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8080/api/v1/auth/register', formData);
+            const response = await api.post('/api/v1/auth/register', formData);
             
             // If backend returns token/userId on register, log them in immediately
             if (response.data && response.data.token) {

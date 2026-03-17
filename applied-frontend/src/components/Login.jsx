@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -9,7 +9,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8080/api/v1/auth/login', formData);
+            const response = await api.post('/api/v1/auth/login', formData);
             
             // Checking for both token and userId from your AuthResponse DTO
             if (response.data && response.data.token && response.data.userId) {

@@ -51,13 +51,17 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ← Single consolidated CORS config (removed WebMvcConfigurer)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://jobtracker-1-mrs0.onrender.com"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
