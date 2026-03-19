@@ -1,6 +1,6 @@
 package com.ak.jobtracker.component;
 
-import com.ak.jobtracker.entities.User; // Import your User entity
+import com.ak.jobtracker.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
